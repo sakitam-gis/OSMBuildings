@@ -61,7 +61,7 @@
   <script src="OSMBuildings.debug.js"></script>
 </head>
 
-<body>
+<body style="background-color: #ff8888">
 <canvas id="map"></canvas>
 
 <div class="control tilt">
@@ -94,7 +94,8 @@
     },
     rotation: 30, // bearing
     tilt: 60, // pitch
-    disabled: true,
+    // disabled: true,
+    // backgroundColor: 'transparent',
     state: false, // stores map position/rotation in url
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
   });

@@ -5,7 +5,7 @@ const
   MAX_ZOOM = 22,
 
   // MAX_TILT = 75;
-  MAX_TILT = 45;
+  MAX_TILT = 75;
 
 
 const TILE_SIZE = 256;
@@ -17,9 +17,11 @@ let DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
 
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to horizon into
-const FOG_COLOR = '#e8e0d8';
-//const FOG_COLOR = '#f0f8ff';
+// const FOG_COLOR = '#e8e0d8';
+// const FOG_COLOR = 'rgba(255, 255, 255, 255)';
+const FOG_COLOR = '#f0f8ff';
 const BACKGROUND_COLOR = '#efe8e0';
+// const BACKGROUND_COLOR = 'rgba(255, 255, 255, 0)';
 
 const document = window.document;
 
