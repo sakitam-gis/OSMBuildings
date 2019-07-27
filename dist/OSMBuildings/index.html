@@ -58,11 +58,11 @@
     }
   </style>
   <link rel="stylesheet" href="OSMBuildings.css">
-  <script src="OSMBuildings.js"></script>
+  <script src="OSMBuildings.debug.js"></script>
 </head>
 
 <body>
-<div id="map"></div>
+<canvas id="map"></canvas>
 
 <div class="control tilt">
   <button class="dec">&#8601;</button>
@@ -80,22 +80,31 @@
 </div>
 
 <script>
+  const canvas = document.getElementById('map');
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
   const osmb = new OSMBuildings({
-    container: 'map',
+    container: canvas,
     zoom: 16,
     minZoom: 16,
     maxZoom: 19,
-    position: { latitude: 52.52000, longitude: 13.41000 },
-    state: true, // stores map position/rotation in url
+    position: {
+      latitude: 52.52000,
+      longitude: 13.41000
+    },
+    rotation: 30, // bearing
+    tilt: 60, // pitch
+    disabled: true,
+    state: false, // stores map position/rotation in url
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
   });
 
-  osmb.addMapTiles(
-    'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-    {
-      attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="https://mapbox.com/">Mapbox</a>'
-    }
-  );
+  // osmb.addMapTiles(
+  //   'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+  //   {
+  //     attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="https://mapbox.com/">Mapbox</a>'
+  //   }
+  // );
 
   osmb.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
 
