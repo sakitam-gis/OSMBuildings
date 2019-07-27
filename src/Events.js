@@ -108,7 +108,11 @@ class Events {
       }
       resizeTimer = setTimeout(() => {
         resizeTimer = null;
-        APP.setSize(APP.container.offsetWidth, APP.container.offsetHeight);
+        if (APP.container) {
+          APP.setSize(APP.container.offsetWidth || APP.container.width, APP.container.offsetHeight || APP.container.height);
+        } else if (APP.canvas) {
+          APP.setSize(APP.canvas.offsetWidth || APP.canvas.width, APP.canvas.offsetHeight || APP.canvas.height);
+        }
       }, 250);
     });
   }
@@ -325,7 +329,7 @@ class Events {
         dy = t1.clientY-this.prevY;
       this.isClick = (dx*dx+dy*dy < 15);
     }
-    
+
     if (e.touches.length > 1) {
       APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / window.innerHeight));
       this.prevTilt = APP.tilt;
@@ -335,7 +339,7 @@ class Events {
     } else {
       this.moveMap(t1);
     }
-    
+
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
   }

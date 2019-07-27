@@ -604,7 +604,7 @@ eval("module.exports = function vec2Copy(out, a) {\n    out[0] = a[0]\n    out[1
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("// webpack src/icons/triangulateSVG.js -o lib/triangulateSVG.js --mode development\n\nconst parseSVGPath = __webpack_require__(/*! parse-svg-path */ \"./node_modules/parse-svg-path/index.js\");\nconst getPathContours = __webpack_require__(/*! svg-path-contours */ \"./node_modules/svg-path-contours/index.js\");\n\n// TODO\n// rectangles, circles\n// colors from geometry\n// scale\n// simplify\n// ignore fill:none\n// <rect x=\"7.256\" y=\"17.315\" fill=\"none\" width=\"57.489\" height=\"35.508\"/>\n// <rect x=\"7.256\" y=\"49.216\" fill=\"#F07D00\" width=\"56.363\" height=\"3.607\"/>\n// <polygon fill=\"#003C64\" stroke=\"#003C64\" stroke-miterlimit=\"10\" points=\"18.465,18.011 12.628,29.15 12.628,18.011 7.256,18.011 7.256,42.903 12.628,42.903 12.628,29.867 18.789,42.903 24.84,42.903 17.75,29.365 24.195,18.011\"/>\n// <circle cx=\"25\" cy=\"75\" r=\"20\" stroke=\"red\" fill=\"transparent\" stroke-width=\"5\"/>\n// <ellipse cx=\"75\" cy=\"75\" rx=\"20\" ry=\"5\" stroke=\"red\" fill=\"transparent\" stroke-width=\"5\"/>\n\nfunction SVGtoPolygons (svg) {\n  const res = [];\n\n  let rx = /<path[^/]+d=\"([^\"]+)\"/g;\n  let match;\n  do {\n    match = rx.exec(svg);\n    if (match) {\n      const path = parseSVGPath(match[1]);\n      const contours = getPathContours(path);\n      res.push(contours);\n    }\n  } while (match);\n\n  rx = /<polygon[^/]+points=\"([^\"]+)\"/g;\n  do {\n    match = rx.exec(svg);\n    if (match) {\n      const points = match[1]\n        .split(/\\s+/g)\n        .map(point => {\n          const p = point.split(',');\n          return [\n            parseFloat(p[0]),\n            parseFloat(p[1]),\n          ];\n        });\n      res.push([points]);\n    }\n  } while (match);\n\n  return res;\n}\n\nfunction getOffsetAndScale (polygons) {\n  let\n    minX = Infinity, maxX = -Infinity,\n    minY = Infinity, maxY = -Infinity;\n\n  polygons.forEach(poly => {\n    poly.forEach(ring => {\n      ring.forEach(point => {\n        minX = Math.min(minX, point[0]);\n        maxX = Math.max(maxX, point[0]);\n        minY = Math.min(minY, point[1]);\n        maxY = Math.max(maxY, point[1]);\n      });\n    });\n  });\n\n  return { offset: [minX, minY], scale: Math.max(maxX-minX, maxY-minY) };\n}\n\nwindow.triangulateSVG = function (svg) { // window... exposes it in webpack\n  const polygons = SVGtoPolygons(svg);\n\n  const { offset, scale } = getOffsetAndScale(polygons);\n\n  const res = [];\n\n  polygons.forEach(poly => {\n    const\n      vertices = [],\n      ringIndex = [];\n\n    let r = 0;\n    poly.forEach((ring, i) => {\n      ring.forEach(point => {\n        vertices.push(...point);\n      });\n\n      if (i) {\n        r += poly[i - 1].length;\n        ringIndex.push(r);\n      }\n    });\n\n    const triangles = earcut(vertices, ringIndex);\n    for (let t = 0; t < triangles.length-2; t+=3) {\n      const i1 = triangles[t  ];\n      const i2 = triangles[t+1];\n      const i3 = triangles[t+2];\n\n      const a = [ (vertices[i1*2]-offset[0])/scale, (vertices[i1*2+1]-offset[1])/scale ];\n      const b = [ (vertices[i2*2]-offset[0])/scale, (vertices[i2*2+1]-offset[1])/scale ];\n      const c = [ (vertices[i3*2]-offset[0])/scale, (vertices[i3*2+1]-offset[1])/scale ];\n\n      res.push([a, b, c]);\n    }\n  });\n\n  return res;\n};\n\n\n//# sourceURL=webpack:///./src/icons/triangulateSVG.js?");
+eval("// webpack src/icons/triangulateSVG.js -o lib/triangulateSVG.js --mode development\r\n\r\nconst parseSVGPath = __webpack_require__(/*! parse-svg-path */ \"./node_modules/parse-svg-path/index.js\");\r\nconst getPathContours = __webpack_require__(/*! svg-path-contours */ \"./node_modules/svg-path-contours/index.js\");\r\n\r\n// TODO\r\n// rectangles, circles\r\n// colors from geometry\r\n// scale\r\n// simplify\r\n// ignore fill:none\r\n// <rect x=\"7.256\" y=\"17.315\" fill=\"none\" width=\"57.489\" height=\"35.508\"/>\r\n// <rect x=\"7.256\" y=\"49.216\" fill=\"#F07D00\" width=\"56.363\" height=\"3.607\"/>\r\n// <polygon fill=\"#003C64\" stroke=\"#003C64\" stroke-miterlimit=\"10\" points=\"18.465,18.011 12.628,29.15 12.628,18.011 7.256,18.011 7.256,42.903 12.628,42.903 12.628,29.867 18.789,42.903 24.84,42.903 17.75,29.365 24.195,18.011\"/>\r\n// <circle cx=\"25\" cy=\"75\" r=\"20\" stroke=\"red\" fill=\"transparent\" stroke-width=\"5\"/>\r\n// <ellipse cx=\"75\" cy=\"75\" rx=\"20\" ry=\"5\" stroke=\"red\" fill=\"transparent\" stroke-width=\"5\"/>\r\n\r\nfunction SVGtoPolygons (svg) {\r\n  const res = [];\r\n\r\n  let rx = /<path[^/]+d=\"([^\"]+)\"/g;\r\n  let match;\r\n  do {\r\n    match = rx.exec(svg);\r\n    if (match) {\r\n      const path = parseSVGPath(match[1]);\r\n      const contours = getPathContours(path);\r\n      res.push(contours);\r\n    }\r\n  } while (match);\r\n\r\n  rx = /<polygon[^/]+points=\"([^\"]+)\"/g;\r\n  do {\r\n    match = rx.exec(svg);\r\n    if (match) {\r\n      const points = match[1]\r\n        .split(/\\s+/g)\r\n        .map(point => {\r\n          const p = point.split(',');\r\n          return [\r\n            parseFloat(p[0]),\r\n            parseFloat(p[1]),\r\n          ];\r\n        });\r\n      res.push([points]);\r\n    }\r\n  } while (match);\r\n\r\n  return res;\r\n}\r\n\r\nfunction getOffsetAndScale (polygons) {\r\n  let\r\n    minX = Infinity, maxX = -Infinity,\r\n    minY = Infinity, maxY = -Infinity;\r\n\r\n  polygons.forEach(poly => {\r\n    poly.forEach(ring => {\r\n      ring.forEach(point => {\r\n        minX = Math.min(minX, point[0]);\r\n        maxX = Math.max(maxX, point[0]);\r\n        minY = Math.min(minY, point[1]);\r\n        maxY = Math.max(maxY, point[1]);\r\n      });\r\n    });\r\n  });\r\n\r\n  return { offset: [minX, minY], scale: Math.max(maxX-minX, maxY-minY) };\r\n}\r\n\r\nwindow.triangulateSVG = function (svg) { // window... exposes it in webpack\r\n  const polygons = SVGtoPolygons(svg);\r\n\r\n  const { offset, scale } = getOffsetAndScale(polygons);\r\n\r\n  const res = [];\r\n\r\n  polygons.forEach(poly => {\r\n    const\r\n      vertices = [],\r\n      ringIndex = [];\r\n\r\n    let r = 0;\r\n    poly.forEach((ring, i) => {\r\n      ring.forEach(point => {\r\n        vertices.push(...point);\r\n      });\r\n\r\n      if (i) {\r\n        r += poly[i - 1].length;\r\n        ringIndex.push(r);\r\n      }\r\n    });\r\n\r\n    const triangles = earcut(vertices, ringIndex);\r\n    for (let t = 0; t < triangles.length-2; t+=3) {\r\n      const i1 = triangles[t  ];\r\n      const i2 = triangles[t+1];\r\n      const i3 = triangles[t+2];\r\n\r\n      const a = [ (vertices[i1*2]-offset[0])/scale, (vertices[i1*2+1]-offset[1])/scale ];\r\n      const b = [ (vertices[i2*2]-offset[0])/scale, (vertices[i2*2+1]-offset[1])/scale ];\r\n      const c = [ (vertices[i3*2]-offset[0])/scale, (vertices[i3*2+1]-offset[1])/scale ];\r\n\r\n      res.push([a, b, c]);\r\n    }\r\n  });\r\n\r\n  return res;\r\n};\r\n\n\n//# sourceURL=webpack:///./src/icons/triangulateSVG.js?");
 
 /***/ })
 
@@ -2355,10 +2355,10 @@ class OSMBuildings {
    * @param {Number} [options.position.longitude=13.410000] Position longitude
    * @param {String} [options.baseURL='.'] DEPRECATED For locating assets. This is relative to calling html page
    * @param {Boolean} [options.showBackfaces=false] DEPRECATED Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-   * @param {String} [options.fogColor='#e8e0d8'] DEPRECATED Color to be used for sky gradients and distance fog
+   * @param {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients, distance fog and color benath the map
    * @param {String} [options.highlightColor='#f08000'] DEPRECATED Default color for highlighting features
-   * @param {Array} [options.effects=[]] DEPRECATED Which effects to enable. The only effect at the moment is 'shadows'
-   * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
+   * @param {Array} [options.effects] DEPRECATED Which effects to enable. The only effect at the moment is 'shadows'
+   * @param {String} [options.backgroundColor] DEPRECATED Overall background color
    * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality.
    * @param {Object} [options.style] Sets the default building style
    * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
@@ -2373,7 +2373,6 @@ class OSMBuildings {
     }
 
     this.view = new View();
-    this.view.backgroundColor = Qolor.parse(options.backgroundColor || BACKGROUND_COLOR).toArray();
     this.view.fogColor = Qolor.parse(options.fogColor || FOG_COLOR).toArray();
 
     this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
@@ -2397,32 +2396,43 @@ class OSMBuildings {
     const blob = new Blob([workers.feature], { type: 'application/javascript' });
     this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
 
+    this._isCanvasRender = false;
+
     //*** create container ********************************
 
     let container = options.container;
     if (typeof container === 'string') {
       container = document.getElementById(options.container);
+    } else if (container && container instanceof HTMLCanvasElement) {
+      this._isCanvasRender = true; // flag as canvas container
     }
 
-    this.container = document.createElement('DIV');
-    this.container.className = 'osmb';
-    if (container.offsetHeight === 0) {
-      container.style.height = '100%';
-      console.warn('Container height should be set. Now defaults to 100%.');
+    if (!this._isCanvasRender) {
+      this.container = document.createElement('DIV');
+      this.container.className = 'osmb';
+      if (container.offsetHeight === 0) {
+        container.style.height = '100%';
+        console.warn('Container height should be set. Now defaults to 100%.');
+      }
+      container.appendChild(this.container);
+      //*** create canvas ***********************************
+
+      this.canvas = document.createElement('CANVAS');
+      this.canvas.className = 'osmb-viewport';
+
+      // const devicePixelRatio = window.devicePixelRatio || 1;
+      const devicePixelRatio = 1; // this also affects building height and zoom
+
+      this.canvas.width = this.width = container.offsetWidth*devicePixelRatio;
+      this.canvas.height = this.height = container.offsetHeight*devicePixelRatio;
+      this.container.appendChild(this.canvas);
+    } else {
+      this.canvas = options.container;
+      this.canvas.className = 'osmb-viewport';
+
+      this.width = this.canvas.width;
+      this.height = this.canvas.height;
     }
-    container.appendChild(this.container);
-
-    //*** create canvas ***********************************
-
-    this.canvas = document.createElement('CANVAS');
-    this.canvas.className = 'osmb-viewport';
-
-    // const devicePixelRatio = window.devicePixelRatio || 1;
-    const devicePixelRatio = 1; // this also affects building height and zoom
-
-    this.canvas.width = this.width = container.offsetWidth*devicePixelRatio;
-    this.canvas.height = this.height = container.offsetHeight*devicePixelRatio;
-    this.container.appendChild(this.canvas);
 
     this.glx = new GLX(this.canvas, options.fastMode);
     GL = this.glx.GL;
@@ -2444,10 +2454,12 @@ class OSMBuildings {
       });
     }
 
-    this._attribution = document.createElement('DIV');
-    this._attribution.className = 'osmb-attribution';
-    this.container.appendChild(this._attribution);
-    this._updateAttribution();
+    if (!this._isCanvasRender) {
+      this._attribution = document.createElement('DIV');
+      this._attribution.className = 'osmb-attribution';
+      this.container.appendChild(this._attribution);
+      this._updateAttribution();
+    }
 
     this.setDate(new Date());
     this.view.start();
@@ -2555,7 +2567,7 @@ class OSMBuildings {
   /**
    * Adds an 3d object (OBJ format) file to the map.
    * <em>Important</em> objects with exactly the same url are cached and only loaded once.
-   * @param {String} url URL of the OBJ file
+   * @param {String} url Absolute URL to OBJ file
    * @param {Object} position Where to render the object
    * @param {Number} position.latitude Position latitude for the object
    * @param {Number} position.longitude Position longitude for the object
@@ -2565,7 +2577,7 @@ class OSMBuildings {
    * @param {Number} [options.altitude=0] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
-   * @param {Boolean} [options.swapYZ] Swap y annd z coordinates. Use this if your model is stainding upright on one side face
+   * @param {Boolean} [options.swapYZ] Swap y and z coordinates. Use this if your model is standing upright on one side
    * @return {Object} The added object
    */
   addOBJ (url, position, options = {}) {
@@ -2575,7 +2587,7 @@ class OSMBuildings {
 
   /**
    * Adds a GeoJSON object to the map.
-   * @param {String} url URL of the GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
+   * @param {String} url Absolute URL to GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
@@ -2672,7 +2684,9 @@ class OSMBuildings {
     //     attribution.push(layer.attribution);
     //   }
     // });
-    this._attribution.innerHTML = attribution.join(' · ');
+    if (this._attribution) {
+      this._attribution.innerHTML = attribution.join(' · ');
+    }
   }
 
   /**
@@ -2756,6 +2770,57 @@ class OSMBuildings {
   getBounds () {
     const viewQuad = this.view.getViewQuad();
     return viewQuad.map(point => getPositionFromLocal(point));
+  }
+
+  /**
+   * update view state
+   * @param {Number} [options.zoom=14] Sets the map zoom
+   * @param {Object} [options.position={latitude: 52.52000,longitude: 13.41000}] Sets the map center
+   * @param {Number} [options.rotation=30] Sets the map rotation
+   * @param {Number} [options.tilt=60] Sets the map pitch
+   */
+  setView(options = {}) {
+    let state = false;
+    if ('zoom' in options) {
+      let { zoom } = options;
+      zoom = Math.max(zoom, this.minZoom);
+      zoom = Math.min(zoom, this.maxZoom);
+
+      if (this.zoom !== zoom) {
+        this.zoom = zoom;
+        this.events.emit('zoom', { zoom: zoom });
+        state = true;
+      }
+    }
+
+    if ('position' in options) {
+      this.position = options.position;
+
+      METERS_PER_DEGREE_LONGITUDE = METERS_PER_DEGREE_LATITUDE * Math.cos(this.position.latitude / 180 * Math.PI);
+      state = true;
+    }
+
+    if ('rotation' in options) {
+      const rotation = options.rotation % 360;
+      if (this.rotation !== rotation) {
+        this.rotation = rotation;
+        this.events.emit('rotate', { rotation: rotation });
+        state = true;
+      }
+    }
+
+    if ('tilt' in options) {
+      const tilt = clamp(options.tilt, 0, MAX_TILT);
+      if (this.tilt !== tilt) {
+        this.tilt = tilt;
+        this.events.emit('tilt', { tilt: tilt });
+        state = true;
+      }
+    }
+
+    if (state) {
+      this.events.emit('change');
+    }
   }
 
   /**
@@ -2930,12 +2995,14 @@ class OSMBuildings {
     this.events.destroy();
 
     this.glx.destroy();
-    this.canvas.parentNode.removeChild(this.canvas);
 
     this.features.destroy();
     this.markers.destroy();
 
-    this.container.innerHTML = '';
+    if (this.container) {
+      this.canvas.parentNode.removeChild(this.canvas);
+      this.container.innerHTML = '';
+    }
   }
 
   // destroyWorker () {
@@ -3142,7 +3209,11 @@ class Events {
       }
       resizeTimer = setTimeout(() => {
         resizeTimer = null;
-        APP.setSize(APP.container.offsetWidth, APP.container.offsetHeight);
+        if (APP.container) {
+          APP.setSize(APP.container.offsetWidth || APP.container.width, APP.container.offsetHeight || APP.container.height);
+        } else if (APP.canvas) {
+          APP.setSize(APP.canvas.offsetWidth || APP.canvas.width, APP.canvas.offsetHeight || APP.canvas.height);
+        }
       }, 250);
     });
   }
@@ -3359,7 +3430,7 @@ class Events {
         dy = t1.clientY-this.prevY;
       this.isClick = (dx*dx+dy*dy < 15);
     }
-    
+
     if (e.touches.length > 1) {
       APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / window.innerHeight));
       this.prevTilt = APP.tilt;
@@ -3369,7 +3440,7 @@ class Events {
     } else {
       this.moveMap(t1);
     }
-    
+
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
   }
@@ -6005,5 +6076,5 @@ View.Blur = class {
     this.texCoordBuffer.destroy();
   }
 };
-OSMBuildings.VERSION = '4.0.4';
+OSMBuildings.VERSION = '4.0.5';
 }());

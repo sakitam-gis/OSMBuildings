@@ -94,32 +94,43 @@ class OSMBuildings {
     const blob = new Blob([workers.feature], { type: 'application/javascript' });
     this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
 
+    this._isCanvasRender = false;
+
     //*** create container ********************************
 
     let container = options.container;
     if (typeof container === 'string') {
       container = document.getElementById(options.container);
+    } else if (container && container instanceof HTMLCanvasElement) {
+      this._isCanvasRender = true; // flag as canvas container
     }
 
-    this.container = document.createElement('DIV');
-    this.container.className = 'osmb';
-    if (container.offsetHeight === 0) {
-      container.style.height = '100%';
-      console.warn('Container height should be set. Now defaults to 100%.');
+    if (!this._isCanvasRender) {
+      this.container = document.createElement('DIV');
+      this.container.className = 'osmb';
+      if (container.offsetHeight === 0) {
+        container.style.height = '100%';
+        console.warn('Container height should be set. Now defaults to 100%.');
+      }
+      container.appendChild(this.container);
+      //*** create canvas ***********************************
+
+      this.canvas = document.createElement('CANVAS');
+      this.canvas.className = 'osmb-viewport';
+
+      // const devicePixelRatio = window.devicePixelRatio || 1;
+      const devicePixelRatio = 1; // this also affects building height and zoom
+
+      this.canvas.width = this.width = container.offsetWidth*devicePixelRatio;
+      this.canvas.height = this.height = container.offsetHeight*devicePixelRatio;
+      this.container.appendChild(this.canvas);
+    } else {
+      this.canvas = options.container;
+      this.canvas.className = 'osmb-viewport';
+
+      this.width = this.canvas.width;
+      this.height = this.canvas.height;
     }
-    container.appendChild(this.container);
-
-    //*** create canvas ***********************************
-
-    this.canvas = document.createElement('CANVAS');
-    this.canvas.className = 'osmb-viewport';
-
-    // const devicePixelRatio = window.devicePixelRatio || 1;
-    const devicePixelRatio = 1; // this also affects building height and zoom
-
-    this.canvas.width = this.width = container.offsetWidth*devicePixelRatio;
-    this.canvas.height = this.height = container.offsetHeight*devicePixelRatio;
-    this.container.appendChild(this.canvas);
 
     this.glx = new GLX(this.canvas, options.fastMode);
     GL = this.glx.GL;
@@ -141,10 +152,12 @@ class OSMBuildings {
       });
     }
 
-    this._attribution = document.createElement('DIV');
-    this._attribution.className = 'osmb-attribution';
-    this.container.appendChild(this._attribution);
-    this._updateAttribution();
+    if (!this._isCanvasRender) {
+      this._attribution = document.createElement('DIV');
+      this._attribution.className = 'osmb-attribution';
+      this.container.appendChild(this._attribution);
+      this._updateAttribution();
+    }
 
     this.setDate(new Date());
     this.view.start();
@@ -369,7 +382,9 @@ class OSMBuildings {
     //     attribution.push(layer.attribution);
     //   }
     // });
-    this._attribution.innerHTML = attribution.join(' · ');
+    if (this._attribution) {
+      this._attribution.innerHTML = attribution.join(' · ');
+    }
   }
 
   /**
@@ -453,6 +468,57 @@ class OSMBuildings {
   getBounds () {
     const viewQuad = this.view.getViewQuad();
     return viewQuad.map(point => getPositionFromLocal(point));
+  }
+
+  /**
+   * update view state
+   * @param {Number} [options.zoom=14] Sets the map zoom
+   * @param {Object} [options.position={latitude: 52.52000,longitude: 13.41000}] Sets the map center
+   * @param {Number} [options.rotation=30] Sets the map rotation
+   * @param {Number} [options.tilt=60] Sets the map pitch
+   */
+  setView(options = {}) {
+    let state = false;
+    if ('zoom' in options) {
+      let { zoom } = options;
+      zoom = Math.max(zoom, this.minZoom);
+      zoom = Math.min(zoom, this.maxZoom);
+
+      if (this.zoom !== zoom) {
+        this.zoom = zoom;
+        this.events.emit('zoom', { zoom: zoom });
+        state = true;
+      }
+    }
+
+    if ('position' in options) {
+      this.position = options.position;
+
+      METERS_PER_DEGREE_LONGITUDE = METERS_PER_DEGREE_LATITUDE * Math.cos(this.position.latitude / 180 * Math.PI);
+      state = true;
+    }
+
+    if ('rotation' in options) {
+      const rotation = options.rotation % 360;
+      if (this.rotation !== rotation) {
+        this.rotation = rotation;
+        this.events.emit('rotate', { rotation: rotation });
+        state = true;
+      }
+    }
+
+    if ('tilt' in options) {
+      const tilt = clamp(options.tilt, 0, MAX_TILT);
+      if (this.tilt !== tilt) {
+        this.tilt = tilt;
+        this.events.emit('tilt', { tilt: tilt });
+        state = true;
+      }
+    }
+
+    if (state) {
+      this.events.emit('change');
+    }
   }
 
   /**
@@ -627,12 +693,14 @@ class OSMBuildings {
     this.events.destroy();
 
     this.glx.destroy();
-    this.canvas.parentNode.removeChild(this.canvas);
 
     this.features.destroy();
     this.markers.destroy();
 
-    this.container.innerHTML = '';
+    if (this.container) {
+      this.canvas.parentNode.removeChild(this.canvas);
+      this.container.innerHTML = '';
+    }
   }
 
   // destroyWorker () {
